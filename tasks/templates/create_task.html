@@ -4,6 +4,7 @@
 
 <form method="POST">
     {% csrf_token %}
+    {{ error }}
     {{ form.as_p }}
     <button>Save</button>
 </form>

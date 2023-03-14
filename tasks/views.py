@@ -84,8 +84,16 @@ def create_task(request):
             'form': CreateTaskForm
         })
     elif request.method == 'POST':
-        print(request.POST)
-        return render(request, 'create_task.html', {
+        try:
+            form = CreateTaskForm(request.POST)
+            new_task = form.save(commit=False)
+            new_task.user = request.user
+            new_task.save()
+            print(request.user)
+            return redirect('tasks')
+        except ValueError:
+            return render(request, 'create_task.html', {
             'title': 'Create task',
-            'form': CreateTaskForm
+            'form': CreateTaskForm,
+            'error': 'Please provide valid data'
         })
