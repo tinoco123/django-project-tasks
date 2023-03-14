@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.db import IntegrityError
+from .forms import CreateTaskForm
 
 
 def index(request):
@@ -74,3 +75,17 @@ def sign_in(request):
         else:
             login(request, user)
             return redirect('tasks')
+        
+
+def create_task(request):
+    if request.method == 'GET':
+        return render(request, 'create_task.html', {
+            'title': 'Create task',
+            'form': CreateTaskForm
+        })
+    elif request.method == 'POST':
+        print(request.POST)
+        return render(request, 'create_task.html', {
+            'title': 'Create task',
+            'form': CreateTaskForm
+        })
