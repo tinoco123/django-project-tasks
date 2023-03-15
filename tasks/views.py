@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.db import IntegrityError
 from .forms import CreateTaskForm
+from .models import Task
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
 
 def index(request):
@@ -44,17 +47,6 @@ def sign_up(request):
             })
 
 
-def tasks(request):
-    return render(request, 'tasks.html', {
-        'title': 'Tasks'
-    })
-
-
-def log_out(request):
-    logout(request)
-    return redirect('index')
-
-
 def sign_in(request):
     if request.method == 'GET':
         return render(request, 'sign_in.html', {
@@ -64,7 +56,6 @@ def sign_in(request):
     elif request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        print(username, password)
         user = authenticate(request, username=username, password=password)
         if user is None:
             return render(request, 'sign_in.html', {
@@ -75,8 +66,36 @@ def sign_in(request):
         else:
             login(request, user)
             return redirect('tasks')
-        
 
+
+@login_required
+def log_out(request):
+    logout(request)
+    return redirect('index')
+
+
+@login_required
+def tasks(request):
+    tasks = Task.objects.filter(user=request.user, date_completed__isnull=True)
+    return render(request, 'tasks.html', {
+        'title': 'Tasks',
+        'tasks': tasks,
+        'type_of_tasks': 'Tasks Pending'
+    })
+
+
+@login_required
+def tasks_completed(request):
+    tasks = Task.objects.filter(
+        user=request.user, date_completed__isnull=False).order_by('date_completed')
+    return render(request, 'tasks.html', {
+        'title': 'Tasks',
+        'tasks': tasks,
+        'type_of_tasks': 'Tasks Completed'
+    })
+
+
+@login_required
 def create_task(request):
     if request.method == 'GET':
         return render(request, 'create_task.html', {
@@ -89,11 +108,51 @@ def create_task(request):
             new_task = form.save(commit=False)
             new_task.user = request.user
             new_task.save()
-            print(request.user)
             return redirect('tasks')
         except ValueError:
             return render(request, 'create_task.html', {
-            'title': 'Create task',
-            'form': CreateTaskForm,
-            'error': 'Please provide valid data'
+                'title': 'Create task',
+                'form': CreateTaskForm,
+                'error': 'Please provide valid data'
+            })
+
+
+@login_required
+def task_detail(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'GET':
+        form = CreateTaskForm(instance=task)
+        return render(request, "task_detail.html", {
+            'title': 'Task detail',
+            'task': task,
+            'form': form
         })
+    elif request.method == 'POST':
+        try:
+            form = CreateTaskForm(request.POST, instance=task)
+            form.save()
+            return redirect('tasks')
+        except ValueError:
+            return render(request, "task_detail.html", {
+                'title': 'Task detail',
+                'task': task,
+                'form': form,
+                'error': 'There was an error trying to update'
+            })
+
+
+@login_required
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.date_completed = timezone.now()
+        task.save()
+        return redirect('tasks')
+
+
+@login_required
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.delete()
+        return redirect('tasks')
