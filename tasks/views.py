@@ -22,9 +22,9 @@ def sign_up(request):
             return redirect('index')
         else:
             return render(request, 'signup.html', {
-            'title': "Sign Up",
-            'form': UserCreationForm,
-        })
+                'title': "Sign Up",
+                'form': UserCreationForm,
+            })
     elif request.method == "POST":
         if request.POST['password1'] == request.POST['password2']:
             # Register user
@@ -56,9 +56,9 @@ def sign_in(request):
             return redirect('index')
         else:
             return render(request, 'sign_in.html', {
-            'title': 'Sign In',
-            'form': AuthenticationForm
-        })
+                'title': 'Sign In',
+                'form': AuthenticationForm
+            })
     elif request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
