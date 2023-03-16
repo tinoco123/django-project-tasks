@@ -18,7 +18,10 @@ def index(request):
 
 def sign_up(request):
     if request.method == 'GET':
-        return render(request, 'signup.html', {
+        if request.user.is_authenticated:
+            return redirect('index')
+        else:
+            return render(request, 'signup.html', {
             'title': "Sign Up",
             'form': UserCreationForm,
         })
@@ -49,7 +52,10 @@ def sign_up(request):
 
 def sign_in(request):
     if request.method == 'GET':
-        return render(request, 'sign_in.html', {
+        if request.user.is_authenticated:
+            return redirect('index')
+        else:
+            return render(request, 'sign_in.html', {
             'title': 'Sign In',
             'form': AuthenticationForm
         })
